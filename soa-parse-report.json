@@ -1,0 +1,92 @@
+{
+  "questionPages": 277,
+  "solutionPages": 190,
+  "detectedStarts": 677,
+  "parsedQuestions": 660,
+  "parsedSolutions": 662,
+  "completeQuestions": 660,
+  "firstId": 1,
+  "lastId": 680,
+  "missingSolutions": [],
+  "missingQuestionIds": [
+    234,
+    235,
+    236,
+    271,
+    272,
+    273,
+    275,
+    276,
+    277,
+    278,
+    279,
+    280,
+    281,
+    282,
+    283,
+    285,
+    286,
+    287,
+    356,
+    427
+  ],
+  "excludedDeletedOrUnusable": [
+    234,
+    235,
+    236,
+    271,
+    272,
+    273,
+    275,
+    276,
+    277,
+    278,
+    279,
+    280,
+    281,
+    282,
+    283,
+    285,
+    286,
+    287,
+    356,
+    427
+  ],
+  "sample": [
+    {
+      "id": 1,
+      "answerLetter": "D",
+      "optionCount": 5,
+      "questionStart": "A survey of a group’s viewing habits over the last year revealed the following\ninformation:\n(i) 28% watched gymnastics\n(ii) 29% watched baseball\n(iii)",
+      "answer": "52%"
+    },
+    {
+      "id": 2,
+      "answerLetter": "A",
+      "optionCount": 5,
+      "questionStart": "The probability that a visit to a primary care physician’s (PCP) office results in neither\nlab work nor referral to a specialist is 35%. Of those comi",
+      "answer": "0.05"
+    },
+    {
+      "id": 3,
+      "answerLetter": "D",
+      "optionCount": 5,
+      "questionStart": "You are given and ′ .\nP A [ ∪ B ] = 0.7 P A [ ∪ B ] = 0.9\nCalculate P [ A ].",
+      "answer": "0.6"
+    },
+    {
+      "id": 4,
+      "answerLetter": "A",
+      "optionCount": 5,
+      "questionStart": "An urn contains 10 balls: 4 red and 6 blue. A second urn contains 16 red balls and an\nunknown number of blue balls. A single ball is drawn from each u",
+      "answer": "4"
+    },
+    {
+      "id": 5,
+      "answerLetter": "D",
+      "optionCount": 5,
+      "questionStart": "An auto insurance company has 10,000 policyholders. Each policyholder is classified as\n(i) young or old;\n(ii) male or female; and\n(iii) married or sin",
+      "answer": "880"
+    }
+  ]
+}
