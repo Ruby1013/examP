@@ -13,42 +13,107 @@
             margin: 0;
             min-height: 100vh;
             background:
-                radial-gradient(circle at 18% 18%, rgba(255, 244, 172, .8), transparent 28%),
-                radial-gradient(circle at 82% 12%, rgba(153, 220, 255, .7), transparent 26%),
-                linear-gradient(135deg, #fff6b8, #b8f4c5 48%, #9fd7f2);
+                radial-gradient(circle at 16% 18%, rgba(255, 239, 143, .95), transparent 23%),
+                radial-gradient(circle at 82% 16%, rgba(144, 220, 255, .82), transparent 24%),
+                radial-gradient(circle at 20% 82%, rgba(255, 183, 206, .55), transparent 22%),
+                linear-gradient(135deg, #fff8bf 0%, #c9f7b8 45%, #9ed8ff 100%);
             font-family: Arial, "Microsoft JhengHei", sans-serif;
-            color: #223322;
+            color: #23402f;
             text-align: center;
         }
 
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, .45) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, .45) 1px, transparent 1px);
+            background-size: 42px 42px;
+            opacity: .45;
+        }
+
         main {
-            width: min(840px, calc(100vw - 28px));
-            margin: 20px auto;
+            position: relative;
+            width: min(880px, calc(100vw - 28px));
+            margin: 24px auto;
             background: rgba(255, 255, 255, .94);
-            padding: 24px;
-            border-radius: 8px;
-            box-shadow: 0 14px 34px rgba(38, 89, 65, .22);
+            padding: 26px;
+            border: 3px solid #ffffff;
+            border-radius: 22px;
+            box-shadow: 0 18px 40px rgba(42, 108, 72, .24);
+        }
+
+        .mascot {
+            width: 150px;
+            height: 44px;
+            margin: 0 auto 10px;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #69c46f, #9be77a);
+            position: relative;
+            box-shadow: inset 0 -6px 0 rgba(0, 0, 0, .08);
+        }
+
+        .mascot::before,
+        .mascot::after {
+            content: "";
+            position: absolute;
+            top: 12px;
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: #18331f;
+        }
+
+        .mascot::before {
+            right: 38px;
+        }
+
+        .mascot::after {
+            right: 18px;
+        }
+
+        .mascot-mouth {
+            position: absolute;
+            right: 24px;
+            bottom: 10px;
+            width: 24px;
+            height: 10px;
+            border-bottom: 3px solid #18331f;
+            border-radius: 0 0 18px 18px;
         }
 
         h1 {
-            color: #2e7d32;
-            font-size: 34px;
-            margin: 0 0 16px;
+            color: #207a3c;
+            font-size: clamp(30px, 6vw, 46px);
+            margin: 0 0 8px;
+            letter-spacing: 0;
+        }
+
+        .subtitle {
+            margin: 0 0 18px;
+            color: #4b6b55;
+            font-weight: 700;
         }
 
         button {
-            background: #ffcc00;
+            background: linear-gradient(180deg, #ffe36b, #ffc928);
             border: 0;
-            border-radius: 8px;
-            padding: 11px 18px;
+            border-bottom: 4px solid #d99c00;
+            border-radius: 999px;
+            padding: 12px 20px;
             margin: 6px;
             font-size: 16px;
-            font-weight: 700;
+            font-weight: 800;
+            color: #2d2a0b;
             cursor: pointer;
+            box-shadow: 0 8px 16px rgba(194, 145, 0, .22);
         }
 
         button:hover {
-            background: #f6bd00;
+            transform: translateY(-1px);
+            background: linear-gradient(180deg, #fff08a, #ffd33d);
         }
 
         .stats {
@@ -56,37 +121,63 @@
             justify-content: center;
             gap: 12px;
             flex-wrap: wrap;
-            margin: 0 0 16px;
+            margin: 0 0 18px;
         }
 
         .stats p {
             margin: 0;
-            padding: 8px 12px;
-            background: #f1ffe8;
-            border-radius: 8px;
+            padding: 9px 13px;
+            background: #efffe7;
+            border: 2px solid #d8f7c9;
+            border-radius: 999px;
+            font-weight: 700;
+        }
+
+        #questionTitle {
+            color: #243b53;
+            margin: 24px 0 14px;
         }
 
         #questionText {
             background: #f1ffe8;
-            padding: 18px;
-            border-radius: 8px;
+            padding: 20px;
+            border: 2px solid #d8f7c9;
+            border-radius: 18px;
             font-size: 17px;
-            line-height: 1.55;
+            line-height: 1.6;
             text-align: left;
-            min-height: 58px;
+            min-height: 72px;
+        }
+
+        #questionText p {
+            margin: 0 0 12px;
+        }
+
+        #questionText p:last-child {
+            margin-bottom: 0;
         }
 
         #options {
+            width: min(560px, 100%);
+            margin: 16px auto 0;
             text-align: left;
-            display: inline-block;
+            display: block;
             font-size: 17px;
-            line-height: 1.9;
-            min-width: min(520px, 100%);
+            line-height: 1.8;
         }
 
         #options label {
             display: block;
-            margin: 4px 0;
+            margin: 8px 0;
+            padding: 8px 12px;
+            background: #ffffff;
+            border: 2px solid #edf3e8;
+            border-radius: 14px;
+        }
+
+        #options label:hover {
+            border-color: #9be77a;
+            background: #fbfff8;
         }
 
         #result {
@@ -95,9 +186,9 @@
         }
 
         .answer-summary {
-            margin-bottom: 18px;
-            font-size: 20px;
-            font-weight: 700;
+            margin: 18px 0;
+            font-size: 22px;
+            font-weight: 800;
         }
 
         .correct {
@@ -112,38 +203,41 @@
             max-width: 100%;
             margin: 14px auto;
             padding: 16px 18px;
-            border-radius: 8px;
+            border-radius: 18px;
             text-align: left;
         }
 
         .plain-explanation {
             background: #fff8d8;
-            border-left: 6px solid #ffcc00;
+            border-left: 8px solid #ffcc00;
         }
 
         .official-explanation {
-            background: #f7f7f7;
-            border-left: 6px solid #9ccc65;
+            background: #f5f8f3;
+            border-left: 8px solid #8ed36b;
         }
 
         canvas {
             width: min(400px, 100%);
             aspect-ratio: 1;
             border: 8px solid #ffffff;
-            border-radius: 8px;
+            border-radius: 20px;
             box-shadow: 0 10px 28px rgba(0, 0, 0, .28);
             background: #86d96a;
         }
 
         .game-status {
             margin: 8px 0;
-            font-weight: 700;
+            font-weight: 800;
+            color: #2f6f3e;
         }
     </style>
 </head>
 <body>
     <main id="studyPage">
+        <div class="mascot" aria-hidden="true"><span class="mascot-mouth"></span></div>
         <h1>Exam P 題庫練習中心</h1>
+        <p class="subtitle">答題累積能量，休息時間解鎖 Snake Game</p>
 
         <div class="stats">
             <p>已答題數：<span id="doneCount">0</span></p>
@@ -163,7 +257,9 @@
     </main>
 
     <main id="gamePage" style="display:none;">
+        <div class="mascot" aria-hidden="true"><span class="mascot-mouth"></span></div>
         <h1>Snake Game</h1>
+        <p class="subtitle">練習後的小休息，分數越高越有成就感</p>
 
         <button type="button" id="classicButton">一般模式</button>
         <button type="button" id="battleButton">對戰模式</button>
