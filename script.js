@@ -2,7 +2,6 @@ let currentQuestion = null;
 let doneCount = 0;
 let correctCount = 0;
 let wrongCount = 0;
-let remainingQuestions = [];
 const REQUIRED_QUESTIONS_FOR_GAME = 30;
 
 let breakTimer = null;
@@ -27,33 +26,32 @@ let score = 0;
 let enemies = [];
 let corpseFoods = [];
 
-function initQuestions() {
-    if (typeof questions === "undefined" || questions.length === 0) {
-        alert("題庫沒有載入，請確認 questionBank.js 在同一個資料夾。");
-        return false;
-    }
+async function randomQuestion() {
+    setResultMessage("題目載入中...");
 
-    remainingQuestions = [...questions];
-    return true;
+    try {
+        const response = await fetch("/api/questions/random");
+        if (!response.ok) {
+            throw new Error("Question API failed");
+        }
+
+        currentQuestion = await response.json();
+        renderQuestion(currentQuestion);
+    } catch (error) {
+        setResultMessage("題庫載入失敗，請確認 Flask 後端與資料庫已啟動。");
+    }
 }
 
-function randomQuestion() {
-    if (remainingQuestions.length === 0 && !initQuestions()) {
-        return;
-    }
-
-    const randomIndex = Math.floor(Math.random() * remainingQuestions.length);
-    currentQuestion = remainingQuestions[randomIndex];
-    remainingQuestions.splice(randomIndex, 1);
-
+function renderQuestion(question) {
     document.getElementById("questionTitle").innerText =
-        `Question ${currentQuestion.id} - ${currentQuestion.topic}`;
-    document.getElementById("questionText").innerHTML = formatQuestionHtml(currentQuestion.question);
+        `Question ${question.id} - ${question.topic}`;
+    document.getElementById("questionText").innerHTML = formatQuestionHtml(question.question);
 
     const optionsDiv = document.getElementById("options");
     optionsDiv.innerHTML = "";
 
-    for (const option of currentQuestion.options) {
+    question.options.forEach((option, index) => {
+        const letter = String.fromCharCode(65 + index);
         const label = document.createElement("label");
         const radio = document.createElement("input");
         radio.type = "radio";
@@ -61,13 +59,11 @@ function randomQuestion() {
         radio.value = option;
 
         label.appendChild(radio);
-        label.append(` ${formatInlineText(option)}`);
+        label.append(` ${letter}. ${formatInlineText(option)}`);
         optionsDiv.appendChild(label);
-        optionsDiv.appendChild(document.createElement("br"));
-    }
+    });
 
     document.getElementById("result").innerHTML = "";
-    updateStats();
 }
 
 function formatQuestionHtml(text) {
@@ -96,7 +92,7 @@ function formatQuestionText(text) {
 
 function formatInlineText(text) {
     return String(text)
-        .replace(/[\uE000-\uF8FF]/g, "’")
+        .replace(/[\uE000-\uF8FF]/g, "")
         .replace(/\s+/g, " ")
         .replace(/\s+([,.;:])/g, "$1")
         .replace(/\(\s+\)/g, "()")
@@ -104,7 +100,7 @@ function formatInlineText(text) {
 }
 
 function escapeHtml(text) {
-    return text
+    return String(text)
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
@@ -112,7 +108,7 @@ function escapeHtml(text) {
         .replace(/'/g, "&#039;");
 }
 
-function checkAnswer() {
+async function checkAnswer() {
     if (currentQuestion === null) {
         alert("請先抽一題。");
         return;
@@ -121,72 +117,61 @@ function checkAnswer() {
     const selected = document.querySelector('input[name="answer"]:checked');
 
     if (!selected) {
-        alert("請先選一個答案。");
+        alert("請先選擇一個答案。");
         return;
     }
 
-    doneCount++;
+    try {
+        const response = await fetch("/api/answers/check", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                question_id: currentQuestion.id,
+                answer: selected.value
+            })
+        });
 
-    if (selected.value === currentQuestion.answer) {
-        correctCount++;
-        document.getElementById("result").innerHTML = renderAnswerResult(true, selected.value);
-    } else {
-        wrongCount++;
-        document.getElementById("result").innerHTML = renderAnswerResult(false, selected.value);
+        if (!response.ok) {
+            throw new Error("Answer API failed");
+        }
+
+        const result = await response.json();
+        doneCount++;
+
+        if (result.correct) {
+            correctCount++;
+        } else {
+            wrongCount++;
+        }
+
+        document.getElementById("result").innerHTML = renderAnswerResult(result, selected.value);
+        currentQuestion = null;
+        updateStats();
+    } catch (error) {
+        setResultMessage("答案檢查失敗，請稍後再試。");
     }
-
-    currentQuestion = null;
-    updateStats();
 }
 
-function renderAnswerResult(isCorrect, selectedValue) {
-    const plainExplanation = getPlainExplanation(currentQuestion);
-    const answerSummary = isCorrect
-        ? `<div style="color:green;font-size:20px;font-weight:bold;">答對了！</div>`
+function renderAnswerResult(result, selectedValue) {
+    const answerSummary = result.correct
+        ? `<div class="answer-summary correct">答對了！</div>`
         : `
-            <div style="color:red;font-size:20px;font-weight:bold;">答錯了</div>
-            <br>
-            你選的是：${escapeHtml(selectedValue)}<br>
-            正確答案：${escapeHtml(currentQuestion.answer)}
+            <div class="answer-summary wrong">答錯了</div>
+            <p>你的答案：${escapeHtml(selectedValue)}</p>
+            <p>正確答案：${escapeHtml(result.answer)}</p>
         `;
 
     return `
-        <div class="answer-summary">${answerSummary}</div>
+        ${answerSummary}
         <section class="explanation-box plain-explanation">
-            <h3>白話解釋</h3>
-            ${paragraphsToHtml(plainExplanation)}
+            <h3>白話說明</h3>
+            ${paragraphsToHtml(result.plain_explanation)}
         </section>
         <section class="explanation-box official-explanation">
-            <h3>官方解析</h3>
-            ${paragraphsToHtml(formatOfficialExplanation(currentQuestion.explanation))}
+            <h3>官方解答</h3>
+            ${paragraphsToHtml(formatOfficialExplanation(result.explanation))}
         </section>
     `;
-}
-
-function getPlainExplanation(question) {
-    if (question.plainExplanation) {
-        return question.plainExplanation;
-    }
-
-    if (
-        question.question.includes("high-risk") &&
-        question.question.includes("low-risk") &&
-        question.question.includes("no fires in the first and second years")
-    ) {
-        return [
-            "這題的重點不是直接算「第三、四年沒火災」而已，因為題目已經告訴你：這個人前兩年都沒有火災。這個資訊會讓我們重新猜他比較可能是哪一種屋主。",
-            "一開始，高風險屋主只有 10%，低風險屋主有 90%。低風險屋主每年沒火災的機率是 0.99，高風險是 0.80。所以如果一個人前兩年都沒火災，他更像是低風險屋主。",
-            "我們要算的是：在「前兩年沒火災」這個條件下，後兩年也沒火災的機率。用條件機率想，就是「四年都沒火災的機率」除以「前兩年沒火災的機率」。",
-            "四年都沒火災：高風險部分是 0.1 × 0.8^4，低風險部分是 0.9 × 0.99^4。前兩年沒火災：高風險部分是 0.1 × 0.8^2，低風險部分是 0.9 × 0.99^2。",
-            "所以答案是 (0.1×0.8^4 + 0.9×0.99^4) / (0.1×0.8^2 + 0.9×0.99^2) ≈ 0.9571。直覺上也合理：前兩年都安全，代表他很可能是低風險，所以後兩年也安全的機率很高。"
-        ].join("\n");
-    }
-
-    return [
-        "先不要急著看公式。這題可以先抓三件事：題目給了哪些已知條件、它要你算哪個機率、官方解析把哪些情況分開討論。",
-        "如果官方解析用了 H、L、X、Y 這種符號，通常是在把文字縮短。你可以先把符號翻回中文，再看它是不是在做條件機率、全機率公式，或貝氏定理。",
-        "這題的官方答案是 " + question.answer + "。下面官方解析保留原文，方便你對照符號。"
-    ].join("\n");
 }
 
 function formatOfficialExplanation(text) {
@@ -200,7 +185,7 @@ function formatOfficialExplanation(text) {
 }
 
 function paragraphsToHtml(text) {
-    return String(text)
+    return String(text || "")
         .split("\n")
         .map(line => line.trim())
         .filter(Boolean)
@@ -217,10 +202,14 @@ function updateStats() {
     document.getElementById("accuracyText").innerText = `${accuracy}%`;
 }
 
+function setResultMessage(message) {
+    document.getElementById("result").innerHTML = `<p>${escapeHtml(message)}</p>`;
+}
+
 function showGame() {
     if (doneCount < REQUIRED_QUESTIONS_FOR_GAME) {
         const remaining = REQUIRED_QUESTIONS_FOR_GAME - doneCount;
-        alert(`還要再完成 ${remaining} 題，才能休息玩蛇蛇 🐍`);
+        alert(`還需要完成 ${remaining} 題才能進入休息遊戲。`);
         return;
     }
 
@@ -245,19 +234,19 @@ function showStudy() {
     }
 
     gameMode = "";
-    modeText.innerText = "請選擇模式";
-    timerText.innerText = "休息剩餘 10:00";
+    modeText.innerText = "請選擇遊戲模式";
+    timerText.innerText = "休息時間：10:00";
 }
 
 function chooseClassic() {
     gameMode = "classic";
-    modeText.innerText = "經典模式：吃蘋果加分";
+    modeText.innerText = "一般模式：吃蘋果得分";
     startGame();
 }
 
 function chooseBattle() {
     gameMode = "battle";
-    modeText.innerText = "對戰模式：讓敵人撞你來加分";
+    modeText.innerText = "對戰模式：避開敵人，吃掉敵人留下的食物";
     startGame();
 }
 
@@ -289,8 +278,6 @@ function resetGame() {
     createEnemy("red");
     createEnemy("blue");
 }
-
-document.addEventListener("keydown", changeDirection);
 
 function changeDirection(event) {
     const key = event.key.toLowerCase();
@@ -332,12 +319,12 @@ function drawClassicGame() {
     const head = { x: snake[0].x + dx, y: snake[0].y + dy };
 
     if (hitWall(head)) {
-        gameOver("撞到牆了！");
+        gameOver("撞到牆了");
         return;
     }
 
     if (hitSnakeBody(head, snake)) {
-        gameOver("撞到自己了！");
+        gameOver("撞到自己了");
         return;
     }
 
@@ -365,20 +352,20 @@ function drawBattleGame() {
     const blueLength = enemies.find(enemy => enemy.color === "blue")?.body.length ?? 0;
 
     ctx.font = "16px Arial";
-    ctx.fillText(`你: ${snake.length}`, 250, 35);
-    ctx.fillText(`紅: ${redLength}`, 250, 60);
-    ctx.fillText(`藍: ${blueLength}`, 250, 85);
+    ctx.fillText(`玩家 ${snake.length}`, 250, 35);
+    ctx.fillText(`紅蛇 ${redLength}`, 250, 60);
+    ctx.fillText(`藍蛇 ${blueLength}`, 250, 85);
 
     const head = { x: snake[0].x + dx, y: snake[0].y + dy };
 
     if (hitWall(head)) {
-        gameOver("撞到牆了！");
+        gameOver("撞到牆了");
         return;
     }
 
     for (const enemy of enemies) {
         if (hitSnakeBody(head, enemy.body)) {
-            gameOver("撞到敵人了！");
+            gameOver("撞到敵人了");
             return;
         }
     }
@@ -595,7 +582,7 @@ function startBreakTimer() {
         if (breakSeconds <= 0) {
             clearInterval(breakTimer);
             breakTimer = null;
-            alert("休息時間結束，回去練題！");
+            alert("休息時間結束，回到題庫繼續練習。");
             showStudy();
         }
     }, 1000);
@@ -604,11 +591,18 @@ function startBreakTimer() {
 function updateBreakTimerText() {
     const minutes = Math.floor(breakSeconds / 60);
     const seconds = String(breakSeconds % 60).padStart(2, "0");
-    timerText.innerText = `休息剩餘 ${minutes}:${seconds}`;
+    timerText.innerText = `休息時間：${minutes}:${seconds}`;
 }
 
+document.getElementById("nextQuestionButton").addEventListener("click", randomQuestion);
+document.getElementById("checkAnswerButton").addEventListener("click", checkAnswer);
+document.getElementById("showGameButton").addEventListener("click", showGame);
+document.getElementById("classicButton").addEventListener("click", chooseClassic);
+document.getElementById("battleButton").addEventListener("click", chooseBattle);
+document.getElementById("backToStudyButton").addEventListener("click", showStudy);
+document.addEventListener("keydown", changeDirection);
+
 window.onload = function () {
-    initQuestions();
     updateStats();
     updateBreakTimerText();
     drawBackground();

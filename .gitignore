@@ -1,0 +1,10 @@
+__pycache__/
+.pytest_cache/
+.venv/
+venv/
+*.pyc
+*.sqlite3
+cloudflared.exe
+cloudflared.*.log
+docx_inspect/
+docx_review/
