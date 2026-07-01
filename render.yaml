@@ -1,0 +1,8 @@
+services:
+  - type: web
+    name: examP
+    env: static
+    branch: main
+    rootDir: .
+    staticPublishPath: .
+    autoDeploy: true
