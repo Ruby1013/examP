@@ -200,6 +200,11 @@ def script():
     return send_from_directory(BASE_DIR, "script.js")
 
 
+@app.route("/questionBank.js")
+def question_bank_script():
+    return send_from_directory(BASE_DIR, "questionBank.js")
+
+
 @app.route("/api/health")
 def health():
     with get_connection() as conn:

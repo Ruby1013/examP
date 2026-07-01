@@ -2,6 +2,7 @@ let currentQuestion = null;
 let doneCount = 0;
 let correctCount = 0;
 let wrongCount = 0;
+let remainingLocalQuestions = [];
 const REQUIRED_QUESTIONS_FOR_GAME = 30;
 
 let breakTimer = null;
@@ -26,6 +27,19 @@ let score = 0;
 let enemies = [];
 let corpseFoods = [];
 
+function initLocalQuestions() {
+    if (remainingLocalQuestions.length > 0) {
+        return true;
+    }
+
+    if (typeof questions === "undefined" || questions.length === 0) {
+        return false;
+    }
+
+    remainingLocalQuestions = [...questions];
+    return true;
+}
+
 async function randomQuestion() {
     setResultMessage("題目載入中...");
 
@@ -36,10 +50,21 @@ async function randomQuestion() {
         }
 
         currentQuestion = await response.json();
+        currentQuestion.source = "api";
         renderQuestion(currentQuestion);
+        return;
     } catch (error) {
-        setResultMessage("題庫載入失敗，請確認 Flask 後端與資料庫已啟動。");
+        if (!initLocalQuestions()) {
+            setResultMessage("題庫載入失敗，請確認 Flask 後端已啟動，或 questionBank.js 有放在同一個資料夾。");
+            return;
+        }
     }
+
+    const randomIndex = Math.floor(Math.random() * remainingLocalQuestions.length);
+    currentQuestion = remainingLocalQuestions[randomIndex];
+    currentQuestion.source = "local";
+    remainingLocalQuestions.splice(randomIndex, 1);
+    renderQuestion(currentQuestion);
 }
 
 function renderQuestion(question) {
@@ -121,35 +146,63 @@ async function checkAnswer() {
         return;
     }
 
-    try {
-        const response = await fetch("/api/answers/check", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                question_id: currentQuestion.id,
-                answer: selected.value
-            })
-        });
+    let result;
 
-        if (!response.ok) {
-            throw new Error("Answer API failed");
+    if (currentQuestion.source === "api") {
+        try {
+            const response = await fetch("/api/answers/check", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    question_id: currentQuestion.id,
+                    answer: selected.value
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error("Answer API failed");
+            }
+
+            result = await response.json();
+        } catch (error) {
+            result = buildLocalAnswerResult(currentQuestion, selected.value);
         }
-
-        const result = await response.json();
-        doneCount++;
-
-        if (result.correct) {
-            correctCount++;
-        } else {
-            wrongCount++;
-        }
-
-        document.getElementById("result").innerHTML = renderAnswerResult(result, selected.value);
-        currentQuestion = null;
-        updateStats();
-    } catch (error) {
-        setResultMessage("答案檢查失敗，請稍後再試。");
+    } else {
+        result = buildLocalAnswerResult(currentQuestion, selected.value);
     }
+
+    doneCount++;
+
+    if (result.correct) {
+        correctCount++;
+    } else {
+        wrongCount++;
+    }
+
+    document.getElementById("result").innerHTML = renderAnswerResult(result, selected.value);
+    currentQuestion = null;
+    updateStats();
+}
+
+function buildLocalAnswerResult(question, selectedValue) {
+    return {
+        correct: selectedValue === question.answer,
+        answer: question.answer,
+        answer_letter: question.answerLetter,
+        explanation: question.explanation || "",
+        plain_explanation: plainExplanationFor(question)
+    };
+}
+
+function plainExplanationFor(question) {
+    if (question.plainExplanation) {
+        return question.plainExplanation;
+    }
+
+    return [
+        "先不要急著看公式。這題可以先抓三件事：題目給了哪些已知條件、它要你算哪個機率、官方解答把哪些情況分開討論。",
+        `本題正確答案是 ${question.answer}。你可以把官方解答中的符號逐步對回題目文字，通常會比較好理解。`
+    ].join("\n");
 }
 
 function renderAnswerResult(result, selectedValue) {
@@ -164,7 +217,7 @@ function renderAnswerResult(result, selectedValue) {
     return `
         ${answerSummary}
         <section class="explanation-box plain-explanation">
-            <h3>白話說明</h3>
+            <h3>白話解釋</h3>
             ${paragraphsToHtml(result.plain_explanation)}
         </section>
         <section class="explanation-box official-explanation">
@@ -209,7 +262,7 @@ function setResultMessage(message) {
 function showGame() {
     if (doneCount < REQUIRED_QUESTIONS_FOR_GAME) {
         const remaining = REQUIRED_QUESTIONS_FOR_GAME - doneCount;
-        alert(`還需要完成 ${remaining} 題才能進入休息遊戲。`);
+        alert(`還要再完成 ${remaining} 題，才能休息玩蛇蛇。`);
         return;
     }
 
@@ -603,6 +656,7 @@ document.getElementById("backToStudyButton").addEventListener("click", showStudy
 document.addEventListener("keydown", changeDirection);
 
 window.onload = function () {
+    initLocalQuestions();
     updateStats();
     updateBreakTimerText();
     drawBackground();

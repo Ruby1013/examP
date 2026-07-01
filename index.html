@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Exam P 題庫練習系統</title>
+    <title>Exam P 題庫練習中心</title>
     <style>
         * {
             box-sizing: border-box;
@@ -12,29 +12,32 @@
         body {
             margin: 0;
             min-height: 100vh;
-            background: linear-gradient(135deg, #f8f4e8, #cae8d5 52%, #98c1d9);
+            background:
+                radial-gradient(circle at 18% 18%, rgba(255, 244, 172, .8), transparent 28%),
+                radial-gradient(circle at 82% 12%, rgba(153, 220, 255, .7), transparent 26%),
+                linear-gradient(135deg, #fff6b8, #b8f4c5 48%, #9fd7f2);
             font-family: Arial, "Microsoft JhengHei", sans-serif;
-            color: #1f2a2e;
+            color: #223322;
             text-align: center;
         }
 
         main {
             width: min(840px, calc(100vw - 28px));
             margin: 20px auto;
-            background: #ffffff;
+            background: rgba(255, 255, 255, .94);
             padding: 24px;
             border-radius: 8px;
-            box-shadow: 0 12px 32px rgba(0, 0, 0, .18);
+            box-shadow: 0 14px 34px rgba(38, 89, 65, .22);
         }
 
         h1 {
-            color: #235347;
+            color: #2e7d32;
             font-size: 34px;
             margin: 0 0 16px;
         }
 
         button {
-            background: #f4c430;
+            background: #ffcc00;
             border: 0;
             border-radius: 8px;
             padding: 11px 18px;
@@ -45,12 +48,7 @@
         }
 
         button:hover {
-            background: #e7b820;
-        }
-
-        button:disabled {
-            cursor: not-allowed;
-            opacity: .55;
+            background: #f6bd00;
         }
 
         .stats {
@@ -64,19 +62,18 @@
         .stats p {
             margin: 0;
             padding: 8px 12px;
-            background: #eef7f1;
+            background: #f1ffe8;
             border-radius: 8px;
         }
 
         #questionText {
-            background: #eef7f1;
+            background: #f1ffe8;
             padding: 18px;
             border-radius: 8px;
             font-size: 17px;
             line-height: 1.55;
             text-align: left;
             min-height: 58px;
-            white-space: pre-wrap;
         }
 
         #options {
@@ -121,12 +118,12 @@
 
         .plain-explanation {
             background: #fff8d8;
-            border-left: 6px solid #f4c430;
+            border-left: 6px solid #ffcc00;
         }
 
         .official-explanation {
-            background: #f4f6f6;
-            border-left: 6px solid #6aa84f;
+            background: #f7f7f7;
+            border-left: 6px solid #9ccc65;
         }
 
         canvas {
@@ -146,7 +143,7 @@
 </head>
 <body>
     <main id="studyPage">
-        <h1>Exam P 題庫練習系統</h1>
+        <h1>Exam P 題庫練習中心</h1>
 
         <div class="stats">
             <p>已答題數：<span id="doneCount">0</span></p>
@@ -177,6 +174,7 @@
         <canvas id="game" width="400" height="400"></canvas>
     </main>
 
-    <script src="/script.js"></script>
+    <script src="questionBank.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
