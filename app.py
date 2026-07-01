@@ -11,7 +11,7 @@ from flask import Flask, jsonify, request, send_from_directory
 try:
     import psycopg2
     import psycopg2.extras
-except ImportError:  # Local fallback can still run with SQLite.
+except ImportError:
     psycopg2 = None
 
 
@@ -45,33 +45,34 @@ def execute(conn, sql, params=None):
     params = params or []
     if using_postgres():
         sql = sql.replace("?", "%s")
+        with conn.cursor() as cursor:
+            cursor.execute(sql, params)
+            return
 
-    with conn.cursor() if using_postgres() else conn as cursor:
-        cursor.execute(sql, params)
-        return cursor
+    conn.execute(sql, params)
 
 
 def fetchone(conn, sql, params=None):
+    params = params or []
     if using_postgres():
         sql = sql.replace("?", "%s")
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cursor:
-            cursor.execute(sql, params or [])
+            cursor.execute(sql, params)
             return cursor.fetchone()
 
-    cursor = conn.execute(sql, params or [])
-    row = cursor.fetchone()
+    row = conn.execute(sql, params).fetchone()
     return dict(row) if row else None
 
 
 def fetchall(conn, sql, params=None):
+    params = params or []
     if using_postgres():
         sql = sql.replace("?", "%s")
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cursor:
-            cursor.execute(sql, params or [])
+            cursor.execute(sql, params)
             return cursor.fetchall()
 
-    cursor = conn.execute(sql, params or [])
-    return [dict(row) for row in cursor.fetchall()]
+    return [dict(row) for row in conn.execute(sql, params).fetchall()]
 
 
 def create_schema(conn):
@@ -90,21 +91,22 @@ def create_schema(conn):
             )
             """,
         )
-    else:
-        execute(
-            conn,
-            """
-            CREATE TABLE IF NOT EXISTS questions (
-                id INTEGER PRIMARY KEY,
-                topic TEXT NOT NULL,
-                question TEXT NOT NULL,
-                options TEXT NOT NULL,
-                answer_letter TEXT,
-                answer TEXT NOT NULL,
-                explanation TEXT
-            )
-            """,
+        return
+
+    execute(
+        conn,
+        """
+        CREATE TABLE IF NOT EXISTS questions (
+            id INTEGER PRIMARY KEY,
+            topic TEXT NOT NULL,
+            question TEXT NOT NULL,
+            options TEXT NOT NULL,
+            answer_letter TEXT,
+            answer TEXT NOT NULL,
+            explanation TEXT
         )
+        """,
+    )
 
 
 def load_questions_from_js():
@@ -123,8 +125,7 @@ def seed_questions_if_empty():
         if row and int(row["count"]) > 0:
             return
 
-        questions = load_questions_from_js()
-        for item in questions:
+        for item in load_questions_from_js():
             options = item.get("options", [])
             options_value = (
                 psycopg2.extras.Json(options)
@@ -151,34 +152,23 @@ def seed_questions_if_empty():
             )
 
 
-def normalize_question(row, include_answer=False):
+def normalize_question(row):
     options = row["options"]
     if isinstance(options, str):
         options = json.loads(options)
 
-    payload = {
+    return {
         "id": row["id"],
         "topic": row["topic"],
         "question": row["question"],
         "options": options,
     }
 
-    if include_answer:
-        payload.update(
-            {
-                "answer_letter": row.get("answer_letter"),
-                "answer": row["answer"],
-                "explanation": row.get("explanation") or "",
-            }
-        )
-
-    return payload
-
 
 def plain_explanation_for(question):
     return (
-        "這一題的重點是先辨認題目給的條件，再選擇對應的機率方法。"
-        "請先把事件、樣本空間或隨機變數整理清楚，再比對官方解答的計算步驟。"
+        "先不要急著套公式。這題可以先抓三件事：題目給了哪些已知條件、"
+        "它要你算哪個機率，以及官方解答把哪些情況分開討論。"
         f"本題正確答案是 {question['answer']}。"
     )
 
@@ -256,10 +246,9 @@ def check_answer():
     if not row:
         return jsonify({"error": "Question not found"}), 404
 
-    correct = selected_answer == row["answer"]
     return jsonify(
         {
-            "correct": correct,
+            "correct": selected_answer == row["answer"],
             "answer": row["answer"],
             "answer_letter": row.get("answer_letter"),
             "explanation": row.get("explanation") or "",
