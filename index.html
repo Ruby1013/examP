@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Exam P 題庫練習中心</title>
+    <title>Exam P &#38988;&#24235;&#32244;&#32722;&#20013;&#24515;</title>
     <style>
         * {
             box-sizing: border-box;
@@ -13,12 +13,9 @@
             margin: 0;
             min-height: 100vh;
             background:
-                radial-gradient(circle at 16% 18%, rgba(255, 239, 143, .95), transparent 23%),
-                radial-gradient(circle at 82% 16%, rgba(144, 220, 255, .82), transparent 24%),
-                radial-gradient(circle at 20% 82%, rgba(255, 183, 206, .55), transparent 22%),
-                linear-gradient(135deg, #fff8bf 0%, #c9f7b8 45%, #9ed8ff 100%);
+                linear-gradient(135deg, #fff5a8 0%, #c7f7a8 48%, #8fd7ff 100%);
             font-family: Arial, "Microsoft JhengHei", sans-serif;
-            color: #23402f;
+            color: #26351f;
             text-align: center;
         }
 
@@ -28,92 +25,134 @@
             inset: 0;
             pointer-events: none;
             background-image:
-                linear-gradient(rgba(255, 255, 255, .45) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 255, 255, .45) 1px, transparent 1px);
-            background-size: 42px 42px;
-            opacity: .45;
+                linear-gradient(rgba(255, 255, 255, .5) 2px, transparent 2px),
+                linear-gradient(90deg, rgba(255, 255, 255, .5) 2px, transparent 2px);
+            background-size: 46px 46px;
+            opacity: .42;
         }
 
         main {
             position: relative;
-            width: min(880px, calc(100vw - 28px));
-            margin: 24px auto;
-            background: rgba(255, 255, 255, .94);
-            padding: 26px;
-            border: 3px solid #ffffff;
-            border-radius: 22px;
-            box-shadow: 0 18px 40px rgba(42, 108, 72, .24);
+            width: min(860px, calc(100vw - 26px));
+            margin: 22px auto;
+            background: #fffdf4;
+            padding: 24px;
+            border: 5px solid #ffffff;
+            border-radius: 24px;
+            box-shadow: 0 18px 0 rgba(92, 164, 74, .2), 0 26px 38px rgba(56, 117, 68, .22);
+            overflow: hidden;
         }
 
-        .mascot {
-            width: 150px;
-            height: 44px;
-            margin: 0 auto 10px;
-            border-radius: 999px;
-            background: linear-gradient(90deg, #69c46f, #9be77a);
-            position: relative;
-            box-shadow: inset 0 -6px 0 rgba(0, 0, 0, .08);
-        }
-
-        .mascot::before,
-        .mascot::after {
+        main::before {
             content: "";
             position: absolute;
-            top: 12px;
+            left: 0;
+            right: 0;
+            top: 0;
+            height: 16px;
+            background: repeating-linear-gradient(
+                90deg,
+                #ffcf3f 0 28px,
+                #98df62 28px 56px,
+                #76c7ff 56px 84px
+            );
+        }
+
+        .snake-hero {
+            width: min(360px, 82vw);
+            height: 74px;
+            margin: 18px auto 8px;
+            position: relative;
+        }
+
+        .snake-body {
+            position: absolute;
+            left: 12px;
+            right: 72px;
+            top: 18px;
+            height: 34px;
+            border-radius: 999px;
+            background:
+                repeating-linear-gradient(
+                    90deg,
+                    #77c850 0 34px,
+                    #9ee46e 34px 68px
+                );
+            box-shadow: inset 0 -7px 0 rgba(0, 0, 0, .08);
+        }
+
+        .snake-head {
+            position: absolute;
+            right: 14px;
+            top: 7px;
+            width: 74px;
+            height: 56px;
+            border-radius: 34px 42px 42px 34px;
+            background: #81d957;
+            box-shadow: inset 0 -8px 0 rgba(0, 0, 0, .08);
+        }
+
+        .snake-head::before,
+        .snake-head::after {
+            content: "";
+            position: absolute;
+            top: 15px;
             width: 9px;
             height: 9px;
             border-radius: 50%;
-            background: #18331f;
+            background: #1d2b17;
         }
 
-        .mascot::before {
-            right: 38px;
+        .snake-head::before {
+            right: 26px;
         }
 
-        .mascot::after {
-            right: 18px;
+        .snake-head::after {
+            right: 9px;
         }
 
-        .mascot-mouth {
+        .snake-smile {
             position: absolute;
-            right: 24px;
-            bottom: 10px;
-            width: 24px;
-            height: 10px;
-            border-bottom: 3px solid #18331f;
-            border-radius: 0 0 18px 18px;
+            right: 14px;
+            bottom: 13px;
+            width: 28px;
+            height: 12px;
+            border-bottom: 4px solid #1d2b17;
+            border-radius: 0 0 20px 20px;
         }
 
         h1 {
-            color: #207a3c;
-            font-size: clamp(30px, 6vw, 46px);
-            margin: 0 0 8px;
+            color: #2a8a32;
+            font-size: clamp(32px, 6vw, 50px);
+            margin: 0;
             letter-spacing: 0;
+            text-shadow: 0 4px 0 #e0ffd2;
         }
 
         .subtitle {
-            margin: 0 0 18px;
-            color: #4b6b55;
-            font-weight: 700;
+            margin: 8px 0 18px;
+            color: #52713b;
+            font-size: 17px;
+            font-weight: 800;
         }
 
         button {
-            background: linear-gradient(180deg, #ffe36b, #ffc928);
+            background: linear-gradient(180deg, #ffe96a, #ffc928);
             border: 0;
-            border-bottom: 4px solid #d99c00;
+            border-bottom: 5px solid #d59600;
             border-radius: 999px;
-            padding: 12px 20px;
-            margin: 6px;
+            padding: 13px 22px;
+            margin: 7px;
             font-size: 16px;
-            font-weight: 800;
-            color: #2d2a0b;
+            font-weight: 900;
+            color: #322600;
             cursor: pointer;
-            box-shadow: 0 8px 16px rgba(194, 145, 0, .22);
+            box-shadow: 0 8px 14px rgba(196, 145, 0, .25);
         }
 
         button:hover {
-            transform: translateY(-1px);
-            background: linear-gradient(180deg, #fff08a, #ffd33d);
+            transform: translateY(-2px);
+            background: linear-gradient(180deg, #fff28d, #ffd74f);
         }
 
         .stats {
@@ -126,27 +165,29 @@
 
         .stats p {
             margin: 0;
-            padding: 9px 13px;
-            background: #efffe7;
-            border: 2px solid #d8f7c9;
+            padding: 10px 14px;
+            background: #efffe2;
+            border: 3px solid #c7f3a7;
             border-radius: 999px;
-            font-weight: 700;
+            font-weight: 900;
+            box-shadow: 0 5px 0 rgba(112, 183, 86, .18);
         }
 
         #questionTitle {
-            color: #243b53;
+            color: #1f3e58;
             margin: 24px 0 14px;
+            font-size: 24px;
         }
 
         #questionText {
-            background: #f1ffe8;
+            background: #f4ffe7;
             padding: 20px;
-            border: 2px solid #d8f7c9;
-            border-radius: 18px;
+            border: 3px solid #c7f3a7;
+            border-radius: 20px;
             font-size: 17px;
             line-height: 1.6;
             text-align: left;
-            min-height: 72px;
+            min-height: 76px;
         }
 
         #questionText p {
@@ -158,7 +199,7 @@
         }
 
         #options {
-            width: min(560px, 100%);
+            width: min(580px, 100%);
             margin: 16px auto 0;
             text-align: left;
             display: block;
@@ -169,15 +210,16 @@
         #options label {
             display: block;
             margin: 8px 0;
-            padding: 8px 12px;
+            padding: 9px 13px;
             background: #ffffff;
-            border: 2px solid #edf3e8;
-            border-radius: 14px;
+            border: 3px solid #edf7e3;
+            border-radius: 18px;
+            box-shadow: 0 5px 0 rgba(156, 207, 130, .13);
         }
 
         #options label:hover {
-            border-color: #9be77a;
-            background: #fbfff8;
+            border-color: #95de68;
+            background: #fbfff6;
         }
 
         #result {
@@ -188,7 +230,7 @@
         .answer-summary {
             margin: 18px 0;
             font-size: 22px;
-            font-weight: 800;
+            font-weight: 900;
         }
 
         .correct {
@@ -203,70 +245,76 @@
             max-width: 100%;
             margin: 14px auto;
             padding: 16px 18px;
-            border-radius: 18px;
+            border-radius: 20px;
             text-align: left;
         }
 
         .plain-explanation {
-            background: #fff8d8;
-            border-left: 8px solid #ffcc00;
+            background: #fff7cf;
+            border-left: 9px solid #ffcc00;
         }
 
         .official-explanation {
             background: #f5f8f3;
-            border-left: 8px solid #8ed36b;
+            border-left: 9px solid #8ed36b;
         }
 
         canvas {
             width: min(400px, 100%);
             aspect-ratio: 1;
-            border: 8px solid #ffffff;
-            border-radius: 20px;
-            box-shadow: 0 10px 28px rgba(0, 0, 0, .28);
+            border: 9px solid #ffffff;
+            border-radius: 22px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, .28);
             background: #86d96a;
         }
 
         .game-status {
             margin: 8px 0;
-            font-weight: 800;
+            font-weight: 900;
             color: #2f6f3e;
         }
     </style>
 </head>
 <body>
     <main id="studyPage">
-        <div class="mascot" aria-hidden="true"><span class="mascot-mouth"></span></div>
-        <h1>Exam P 題庫練習中心</h1>
-        <p class="subtitle">答題累積能量，休息時間解鎖 Snake Game</p>
+        <div class="snake-hero" aria-hidden="true">
+            <div class="snake-body"></div>
+            <div class="snake-head"><span class="snake-smile"></span></div>
+        </div>
+        <h1>Exam P &#38988;&#24235;&#32244;&#32722;&#20013;&#24515;</h1>
+        <p class="subtitle">&#31572;&#38988;&#32047;&#31309;&#33021;&#37327;&#65292;&#20241;&#24687;&#26178;&#38291;&#35299;&#37782; Snake Game</p>
 
         <div class="stats">
-            <p>已答題數：<span id="doneCount">0</span></p>
-            <p>答對題數：<span id="correctCount">0</span></p>
-            <p>答錯題數：<span id="wrongCount">0</span></p>
-            <p>正確率：<span id="accuracyText">0%</span></p>
+            <p>&#24050;&#31572;&#38988;&#25976;&#65306;<span id="doneCount">0</span></p>
+            <p>&#31572;&#23565;&#38988;&#25976;&#65306;<span id="correctCount">0</span></p>
+            <p>&#31572;&#37679;&#38988;&#25976;&#65306;<span id="wrongCount">0</span></p>
+            <p>&#27491;&#30906;&#29575;&#65306;<span id="accuracyText">0%</span></p>
         </div>
 
-        <button type="button" id="nextQuestionButton">抽一題</button>
-        <button type="button" id="checkAnswerButton">檢查答案</button>
-        <button type="button" id="showGameButton">休息玩 Snake Game</button>
+        <button type="button" id="nextQuestionButton">&#25277;&#19968;&#38988;</button>
+        <button type="button" id="checkAnswerButton">&#27298;&#26597;&#31572;&#26696;</button>
+        <button type="button" id="showGameButton">&#20241;&#24687;&#29609; Snake Game</button>
 
-        <h2 id="questionTitle">請先抽一題開始練習</h2>
+        <h2 id="questionTitle">&#35531;&#20808;&#25277;&#19968;&#38988;&#38283;&#22987;&#32244;&#32722;</h2>
         <div id="questionText"></div>
         <div id="options"></div>
         <div id="result"></div>
     </main>
 
     <main id="gamePage" style="display:none;">
-        <div class="mascot" aria-hidden="true"><span class="mascot-mouth"></span></div>
+        <div class="snake-hero" aria-hidden="true">
+            <div class="snake-body"></div>
+            <div class="snake-head"><span class="snake-smile"></span></div>
+        </div>
         <h1>Snake Game</h1>
-        <p class="subtitle">練習後的小休息，分數越高越有成就感</p>
+        <p class="subtitle">&#32244;&#32722;&#24460;&#30340;&#23567;&#20241;&#24687;&#65292;&#25343;&#21040;&#39640;&#20998;&#23601;&#26356;&#26377;&#25104;&#23601;&#24863;</p>
 
-        <button type="button" id="classicButton">一般模式</button>
-        <button type="button" id="battleButton">對戰模式</button>
-        <button type="button" id="backToStudyButton">回到題庫</button>
+        <button type="button" id="classicButton">&#19968;&#33324;&#27169;&#24335;</button>
+        <button type="button" id="battleButton">&#23565;&#25136;&#27169;&#24335;</button>
+        <button type="button" id="backToStudyButton">&#22238;&#21040;&#38988;&#24235;</button>
 
-        <p id="modeText" class="game-status">請選擇遊戲模式</p>
-        <p id="timerText" class="game-status">休息時間：10:00</p>
+        <p id="modeText" class="game-status">&#35531;&#36984;&#25799;&#36938;&#25138;&#27169;&#24335;</p>
+        <p id="timerText" class="game-status">&#20241;&#24687;&#26178;&#38291;&#65306;10:00</p>
         <canvas id="game" width="400" height="400"></canvas>
     </main>
 
