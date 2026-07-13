@@ -19,6 +19,10 @@ DEFAULT_SOLUTIONS_PDF_URL = (
 USER_AGENT = "examP official SOA question sync/1.0"
 DEFAULT_MAX_DOWNLOAD_BYTES = 50 * 1024 * 1024
 ALLOWED_SOA_HOSTS = {"soa.org", "www.soa.org"}
+SOLUTION_HEADING_PATTERN = re.compile(
+    r"(?<!\d)(\d{1,3})\s*[.,]\s*Solution\s*:?\s*([A-E])\b",
+    re.I,
+)
 
 
 class OfficialQuestionSourceError(RuntimeError):
@@ -237,7 +241,12 @@ def split_numbered_blocks(text):
 
 
 def parse_answer_key(text):
-    answer_key = {}
+    # Some PDF pages join the footer and the next solution heading on one line.
+    # Do not anchor the official "123. Solution: B" marker to line starts.
+    answer_key = {
+        int(match.group(1)): match.group(2).upper()
+        for match in SOLUTION_HEADING_PATTERN.finditer(text)
+    }
     patterns = [
         r"(?m)^\s*(\d{1,3})[.,]\s*(?:Solution\s*:\s*)?([A-E])\b",
         r"(?m)^\s*(\d{1,3})\s+([A-E])\b",
@@ -245,16 +254,22 @@ def parse_answer_key(text):
     ]
     for pattern in patterns:
         for question_id, letter in re.findall(pattern, text, re.I):
-            answer_key[int(question_id)] = letter.upper()
+            answer_key.setdefault(int(question_id), letter.upper())
     return answer_key
 
 
 def parse_solution_blocks(text):
     blocks = {}
-    for question_id, block in split_numbered_blocks(text):
-        answer_match = re.search(r"\b([A-E])\b", block)
-        prefix = f"Official solution: {answer_match.group(1).upper()}\n\n" if answer_match else ""
-        blocks[question_id] = prefix + block.strip()
+    headings = list(SOLUTION_HEADING_PATTERN.finditer(text))
+    for index, heading in enumerate(headings):
+        question_id = int(heading.group(1))
+        answer_letter = heading.group(2).upper()
+        start = heading.end()
+        end = headings[index + 1].start() if index + 1 < len(headings) else len(text)
+        explanation = text[start:end].strip()
+        blocks[question_id] = (
+            f"Official solution: {answer_letter}\n\n{explanation}"
+        ).strip()
     return blocks
 
 

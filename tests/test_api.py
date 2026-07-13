@@ -93,6 +93,12 @@ def test_official_solution_label_is_used_as_answer_key():
     assert parse_answer_key("1. Solution: D\nWorked solution") == {1: "D"}
 
 
+def test_solution_heading_after_pdf_page_footer_is_still_parsed():
+    extracted = "calculation = 0.5 Page 35 of 190 127. Solution: A\nWorked solution"
+
+    assert parse_answer_key(extracted)[127] == "A"
+
+
 def test_parser_accepts_soa_question_number_followed_by_comma():
     question_text = """286, Example official question.\n(A) 1/6\n(B) 1/4\n(C) 1/3\n(D) 1/2\n(E) 2/3"""
     solution_text = "286. Solution: C\nOfficial explanation"
