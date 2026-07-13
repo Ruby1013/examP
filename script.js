@@ -55,7 +55,7 @@ async function randomQuestion() {
         return;
     } catch (error) {
         if (!initLocalQuestions()) {
-            setResultMessage("題庫載入失敗，請確認 Flask 後端已啟動，或 questionBank.js 有放在同一個資料夾。");
+            setResultMessage("題庫載入失敗，請確認 Flask 後端已啟動，或 SOA 官方題庫快照已完成同步。");
             return;
         }
     }
@@ -199,10 +199,72 @@ function plainExplanationFor(question) {
         return question.plainExplanation;
     }
 
-    return [
-        "先不要急著看公式。這題可以先抓三件事：題目給了哪些已知條件、它要你算哪個機率、官方解答把哪些情況分開討論。",
-        `本題正確答案是 ${question.answer}。你可以把官方解答中的符號逐步對回題目文字，通常會比較好理解。`
-    ].join("\n");
+    const questionText = String(question.question || "");
+    const explanation = String(question.explanation || "");
+    const numbers = keyNumbers(questionText);
+    const calculations = keyCalculations(explanation);
+    const lines = [
+        `題目要做什麼：${explanationGoal(questionText)}`,
+        `關鍵資料：${numbers.length ? numbers.join("、") : "先從題目標出所有已知條件。"}`,
+        `解題方法：${explanationMethod(`${questionText} ${explanation}`)}`
+    ];
+
+    if (calculations.length) {
+        lines.push(`官方解答的關鍵算式：${calculations.join(" → ")}`);
+    } else {
+        lines.push("官方解答的關鍵步驟：依照上面的事件或分布設定，逐步代入題目數值。");
+    }
+
+    lines.push(`結論：計算結果是 ${question.answer}，對應選項 ${question.answerLetter || ""}。`);
+    return lines.join("\n");
+}
+
+function explanationGoal(text) {
+    const lowered = text.toLowerCase();
+    if (lowered.includes("given that")) return "這題要算條件機率：已知後面的條件已經發生，再縮小範圍計算。";
+    if (lowered.includes("none") || lowered.includes("neither")) return "這題要算『全部都沒發生』的機率；通常先算至少一件發生，再用 1 減掉。";
+    if (lowered.includes("both")) return "這題要算兩件事同時發生，也就是事件的交集。";
+    if (lowered.includes("at least")) return "這題要算『至少』的情況；直接相加太多時，通常改算反面再用 1 減掉。";
+    if (lowered.includes("exactly")) return "這題要算『剛好』指定次數的情況，不能把更多或更少的情況算進去。";
+    if (lowered.includes("standard deviation")) return "這題要找標準差，也就是結果通常會離平均值多遠。";
+    if (lowered.includes("variance")) return "這題要找變異數；先整理隨機變數的波動，再視需要相加或使用共變異數。";
+    if (lowered.includes("expected") || lowered.includes("expectation")) return "這題要找長期平均值，也就是把每個可能結果乘上它的機率後加總。";
+    if (lowered.includes("median") || lowered.includes("percentile")) return "這題要找分位點：讓累積機率剛好到題目指定的比例。";
+    if (lowered.includes("probability")) return "這題要算目標事件的機率；先把文字條件翻成事件，再決定要相加、相減或使用條件機率。";
+    return "這題要把題目給的條件整理成可計算的隨機變數或事件關係。";
+}
+
+function explanationMethod(text) {
+    const lowered = text.toLowerCase();
+    const rules = [
+        [["without replacement", "hypergeometric"], "因為是從固定母體抽取而且不放回，各次抽取會互相影響，所以用超幾何分布／組合數。"],
+        [["poisson"], "題目在數固定時間或區間內發生幾次，先找卜瓦松平均次數，再計算指定次數。"],
+        [["exponential", "memoryless"], "題目在處理等待時間或壽命，使用指數分布的生存機率；若已經等了一段時間，可用記憶無關性。"],
+        [["normal", "standard deviation", "standard normal"], "題目使用常態分布，先用平均數與標準差轉成 Z 值，再查相對應的累積機率。"],
+        [["binomial", "number of successes", "probability of success"], "這是固定次數、每次只有成功或失敗的問題；先確認 n、成功機率 p，以及題目問剛好、至少或至多。"],
+        [["uniform"], "均勻分布中每段長度同樣公平，因此機率可用目標區間長度除以總區間長度。"],
+        [["density function", "probability density", "continuous"], "題目給的是連續型密度，機率不是看單一點，而是計算指定區間下方的面積。"],
+        [["independent", "independence"], "題目指出事件獨立，所以同時發生時可以把各自的機率相乘。"],
+        [["all three", "none of", "neither", "both", "union", "intersection"], "這是事件集合問題，先分清楚交集、聯集與補集，再用排容原理避免重複計算。"]
+    ];
+    const matched = rules.find(([keywords]) => keywords.some(keyword => lowered.includes(keyword)));
+    return matched ? matched[1] : "依官方解答先定義事件或隨機變數，再把題目的文字條件逐項代入；不要只看最後答案。";
+}
+
+function keyNumbers(text) {
+    const matches = text.match(/(?<![A-Za-z])(?:\d+\/\d+|\d+(?:,\d{3})*(?:\.\d+)?%?)/g) || [];
+    return [...new Set(matches)].slice(0, 10);
+}
+
+function keyCalculations(explanation) {
+    const calculations = [];
+    explanation.split("\n").forEach(rawLine => {
+        const line = rawLine.replace(/[’′]+/g, "").replace(/\s+/g, " ").replace(/^[ ()]+|[ ()]+$/g, "");
+        if (line.includes("=") && /\d/.test(line) && line.length >= 6 && line.length <= 220 && !calculations.includes(line)) {
+            calculations.push(line);
+        }
+    });
+    return calculations.slice(-2);
 }
 
 function renderAnswerResult(result, selectedValue) {

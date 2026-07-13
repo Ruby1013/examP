@@ -1,4 +1,4 @@
-from app import app
+from app import app, plain_explanation_for
 from soa_official import parse_answer_key, parse_questions, validate_questions
 
 
@@ -59,3 +59,20 @@ def test_quality_gate_rejects_incomplete_record(monkeypatch):
         assert "invalid records" in str(exc)
     else:
         raise AssertionError("Incomplete official records must be rejected")
+
+
+def test_plain_explanation_uses_question_numbers_and_official_calculation():
+    question = {
+        "question": "28% watched A, 29% watched B, and 8% watched all three. Calculate the percentage that watched none.",
+        "answer": "52%",
+        "answer_letter": "D",
+        "explanation": "Official solution: D\n1 - (0.28 + 0.29 - 0.08) = 0.52",
+    }
+
+    result = plain_explanation_for(question)
+
+    assert "28%" in result
+    assert "29%" in result
+    assert "1 - (0.28 + 0.29 - 0.08) = 0.52" in result
+    assert "52%" in result
+    assert "選項 D" in result
