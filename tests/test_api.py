@@ -3,6 +3,7 @@ from soa_official import (
     OfficialQuestionSourceError,
     assert_official_soa_url,
     fetch_bytes,
+    option_value,
     parse_answer_key,
     parse_questions,
     validate_questions,
@@ -102,6 +103,16 @@ def test_parser_accepts_soa_question_number_followed_by_comma():
     assert questions[0]["id"] == 286
     assert questions[0]["answerLetter"] == "C"
     assert questions[0]["answer"] == "1/3"
+
+
+def test_empty_answer_letter_is_not_treated_as_a_valid_option():
+    assert option_value(["A", "B", "C", "D", "E"], "") == ""
+
+
+def test_parser_skips_numbered_pdf_material_without_an_official_answer():
+    question_text = "1. Extracted material\n(A) A\n(B) B\n(C) C\n(D) D\n(E) E"
+
+    assert parse_questions(question_text, "") == []
 
 
 def test_quality_gate_rejects_incomplete_record(monkeypatch):
