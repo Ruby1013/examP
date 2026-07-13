@@ -311,6 +311,8 @@ def key_calculations(explanation):
     for raw_line in str(explanation or "").splitlines():
         line = re.sub(r"[’′]+", "", raw_line)
         line = re.sub(r"\s+", " ", line).strip(" ()")
+        line = re.sub(r"(?<=\d)\s*\.\s*(?=\d)", ".", line)
+        line = re.sub(r"\s+[xX]\s+", " × ", line)
         if (
             "=" in line
             and re.search(r"\d", line)
@@ -319,7 +321,10 @@ def key_calculations(explanation):
         ):
             if line not in calculations:
                 calculations.append(line)
-    return calculations[-2:]
+    numeric_calculations = [
+        line for line in calculations if len(re.findall(r"\d+(?:\.\d+)?%?", line)) >= 2
+    ]
+    return (numeric_calculations or calculations)[-2:]
 
 
 def plain_explanation_for(question):

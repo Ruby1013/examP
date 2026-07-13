@@ -259,12 +259,18 @@ function keyNumbers(text) {
 function keyCalculations(explanation) {
     const calculations = [];
     explanation.split("\n").forEach(rawLine => {
-        const line = rawLine.replace(/[’′]+/g, "").replace(/\s+/g, " ").replace(/^[ ()]+|[ ()]+$/g, "");
+        const line = rawLine
+            .replace(/[’′]+/g, "")
+            .replace(/\s+/g, " ")
+            .replace(/(\d)\s*\.\s*(?=\d)/g, "$1.")
+            .replace(/\s+[xX]\s+/g, " × ")
+            .replace(/^[ ()]+|[ ()]+$/g, "");
         if (line.includes("=") && /\d/.test(line) && line.length >= 6 && line.length <= 220 && !calculations.includes(line)) {
             calculations.push(line);
         }
     });
-    return calculations.slice(-2);
+    const numericCalculations = calculations.filter(line => (line.match(/\d+(?:\.\d+)?%?/g) || []).length >= 2);
+    return (numericCalculations.length ? numericCalculations : calculations).slice(-2);
 }
 
 function renderAnswerResult(result, selectedValue) {
