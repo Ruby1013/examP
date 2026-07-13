@@ -62,11 +62,13 @@ def validate_questions(questions):
 
     invalid = []
     for item in questions:
+        answer_letter = str(item.get("answerLetter", "")).strip().upper()
         if (
             not isinstance(item.get("id"), int)
             or not str(item.get("question", "")).strip()
             or len(item.get("options", [])) != 5
-            or str(item.get("answerLetter", "")) not in "ABCDE"
+            or len(answer_letter) != 1
+            or answer_letter not in "ABCDE"
             or not str(item.get("answer", "")).strip()
         ):
             invalid.append(item.get("id"))
@@ -198,7 +200,12 @@ def parse_questions(questions_text, solutions_text):
             continue
 
         question_text = strip_options(block).strip()
-        answer_letter = answer_key.get(question_id, "")
+        answer_letter = str(answer_key.get(question_id, "")).strip().upper()
+        # PDF text extraction can expose numbered material that looks like a
+        # question but has no matching official solution. It is not a usable
+        # exam item and must not enter the generated snapshot.
+        if len(answer_letter) != 1 or answer_letter not in "ABCDE":
+            continue
         answer = option_value(options, answer_letter)
         explanation = solution_blocks.get(question_id, "")
         if answer_letter and not explanation:
@@ -279,8 +286,9 @@ def strip_options(block):
 
 
 def option_value(options, answer_letter):
-    if answer_letter in "ABCDE":
-        return options[ord(answer_letter) - ord("A")]
+    letter = str(answer_letter or "").strip().upper()
+    if len(letter) == 1 and letter in "ABCDE":
+        return options[ord(letter) - ord("A")]
     return ""
 
 
