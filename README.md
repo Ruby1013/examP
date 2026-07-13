@@ -44,6 +44,7 @@ python scripts/seed_db.py --refresh --local
 - `SOA_FETCH_TIMEOUT`：下載逾時秒數，預設 30。
 - `SOA_MIN_QUESTION_COUNT`：最低合格題數，Render 預設 650。
 - `SOA_ALLOW_LOCAL_FALLBACK`：SOA 下載失敗時是否允許使用最後快照；Render 設為 `0`，確保正式建置必須來自 SOA。
+- `SOA_SYNC_AT_RUNTIME=1`：僅供手動除錯；正式服務不要啟用，以免 PDF 解析超過 Gunicorn 請求逾時。
 
 ## API
 

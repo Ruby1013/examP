@@ -137,20 +137,25 @@ def load_local_question_bank_source():
 
 
 def load_seed_questions():
-    if os.getenv("SOA_USE_LOCAL_QUESTIONBANK") == "1":
-        questions = load_questions_from_local_js()
-        validate_questions(questions)
-        return questions
+    # PDF downloads and parsing belong in the Render build step. Doing this in a
+    # web request can exceed Gunicorn's worker timeout on a cold start.
+    if (
+        os.getenv("SOA_SYNC_AT_RUNTIME") == "1"
+        and os.getenv("SOA_USE_LOCAL_QUESTIONBANK") != "1"
+    ):
+        try:
+            return load_official_questions()
+        except OfficialQuestionSourceError as exc:
+            if os.getenv("SOA_ALLOW_LOCAL_FALLBACK", "1") != "1":
+                raise
+            app.logger.warning(
+                "SOA runtime PDF sync failed; using bundled official snapshot: %s",
+                exc,
+            )
 
-    try:
-        return load_official_questions()
-    except OfficialQuestionSourceError as exc:
-        if os.getenv("SOA_ALLOW_LOCAL_FALLBACK", "1") != "1":
-            raise
-        app.logger.warning("SOA PDF sync failed; using bundled official snapshot: %s", exc)
-        questions = load_questions_from_local_js()
-        validate_questions(questions)
-        return questions
+    questions = load_questions_from_local_js()
+    validate_questions(questions)
+    return questions
 
 
 def insert_questions(conn, questions):
