@@ -3,9 +3,13 @@ services:
     name: exam-p-study-game
     env: python
     plan: free
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app
+    buildCommand: pip install -r requirements.txt && python scripts/sync_official_questions.py
+    startCommand: python scripts/seed_db.py --refresh --local && gunicorn app:app
     envVars:
+      - key: SOA_ALLOW_LOCAL_FALLBACK
+        value: "0"
+      - key: SOA_MIN_QUESTION_COUNT
+        value: "650"
       - key: DATABASE_URL
         fromDatabase:
           name: exam-p-postgres
