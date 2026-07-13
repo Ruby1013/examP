@@ -22,7 +22,9 @@ def main():
     cache_dir = ROOT / ".soa-cache"
     cache_dir.mkdir(exist_ok=True)
 
+    print(f"Downloading official SOA questions: {questions_url}")
     questions_pdf = download_official_pdf(questions_url, cache_dir / "questions.pdf")
+    print(f"Downloading official SOA solutions: {solutions_url}")
     solutions_pdf = download_official_pdf(solutions_url, cache_dir / "solutions.pdf")
     questions = parse_questions(
         extract_pdf_text(questions_pdf),
@@ -36,7 +38,13 @@ def main():
     snapshot += ";\n"
     (ROOT / "questionBank.js").write_text(snapshot, encoding="utf-8")
 
-    report = build_sync_report(questions, questions_pdf, solutions_pdf)
+    report = build_sync_report(
+        questions,
+        questions_pdf,
+        solutions_pdf,
+        questions_url,
+        solutions_url,
+    )
     (ROOT / "soa-parse-report.json").write_text(
         json.dumps(report, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",

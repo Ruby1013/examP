@@ -1,5 +1,12 @@
 from app import app, plain_explanation_for
-from soa_official import parse_answer_key, parse_questions, validate_questions
+from soa_official import (
+    OfficialQuestionSourceError,
+    assert_official_soa_url,
+    fetch_bytes,
+    parse_answer_key,
+    parse_questions,
+    validate_questions,
+)
 
 
 def test_health_endpoint_returns_question_count():
@@ -11,7 +18,60 @@ def test_health_endpoint_returns_question_count():
     assert data["status"] == "ok"
     assert data["question_count"] > 0
     assert data["question_source"] == "Society of Actuaries official Exam P PDFs"
+    assert data["source_page"].startswith("https://www.soa.org/")
     assert data["questions_pdf"].startswith("https://www.soa.org/")
+
+
+def test_answer_endpoint_rejects_invalid_json_body():
+    client = app.test_client()
+
+    response = client.post(
+        "/api/answers/check",
+        data="not-json",
+        content_type="text/plain",
+    )
+
+    assert response.status_code == 400
+
+
+def test_official_source_rejects_insecure_or_untrusted_urls():
+    for url in (
+        "http://www.soa.org/example.pdf",
+        "https://example.com/example.pdf",
+        "https://www.soa.org@example.com/example.pdf",
+    ):
+        try:
+            assert_official_soa_url(url)
+        except OfficialQuestionSourceError:
+            pass
+        else:
+            raise AssertionError(f"Untrusted URL should be rejected: {url}")
+
+
+def test_official_fetch_rejects_redirect_away_from_soa(monkeypatch):
+    class FakeResponse:
+        headers = {"Content-Length": "4"}
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def geturl(self):
+            return "https://example.com/not-official.pdf"
+
+        def read(self, _size):
+            return b"%PDF"
+
+    monkeypatch.setattr("soa_official.urlopen", lambda *_args, **_kwargs: FakeResponse())
+
+    try:
+        fetch_bytes("https://www.soa.org/official.pdf")
+    except OfficialQuestionSourceError:
+        pass
+    else:
+        raise AssertionError("A redirect away from SOA must be rejected")
 
 
 def test_random_question_hides_answer():
