@@ -20,7 +20,7 @@ USER_AGENT = "examP official SOA question sync/1.0"
 DEFAULT_MAX_DOWNLOAD_BYTES = 50 * 1024 * 1024
 ALLOWED_SOA_HOSTS = {"soa.org", "www.soa.org"}
 SOLUTION_HEADING_PATTERN = re.compile(
-    r"(?<!\d)(\d{1,3})\s*[.,]\s*Solution\s*:?\s*([A-E])\b",
+    r"(?<!\d)(\d{1,3})\s*[.,]\s*S\s*o\s*l\s*u\s*t\s*i\s*o\s*n\s*:?\s*([A-E])\b",
     re.I,
 )
 
@@ -247,6 +247,12 @@ def parse_answer_key(text):
         int(match.group(1)): match.group(2).upper()
         for match in SOLUTION_HEADING_PATTERN.finditer(text)
     }
+    # pypdf may split a heading such as "127. Solution: A" across several
+    # lines. Normalizing whitespace recovers that exact marker without relying
+    # on page or line boundaries.
+    normalized_text = re.sub(r"\s+", " ", text)
+    for match in SOLUTION_HEADING_PATTERN.finditer(normalized_text):
+        answer_key[int(match.group(1))] = match.group(2).upper()
     patterns = [
         r"(?m)^\s*(\d{1,3})[.,]\s*(?:Solution\s*:\s*)?([A-E])\b",
         r"(?m)^\s*(\d{1,3})\s+([A-E])\b",
