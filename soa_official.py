@@ -5,7 +5,7 @@ import tempfile
 from datetime import datetime, timezone
 from hashlib import sha256
 from pathlib import Path
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
 
@@ -17,6 +17,8 @@ DEFAULT_SOLUTIONS_PDF_URL = (
     "https://www.soa.org/globalassets/assets/files/edu/edu-exam-p-sample-sol.pdf"
 )
 USER_AGENT = "examP official SOA question sync/1.0"
+DEFAULT_MAX_DOWNLOAD_BYTES = 50 * 1024 * 1024
+ALLOWED_SOA_HOSTS = {"soa.org", "www.soa.org"}
 
 
 class OfficialQuestionSourceError(RuntimeError):
@@ -83,13 +85,20 @@ def validate_questions(questions):
     }
 
 
-def build_sync_report(questions, questions_pdf, solutions_pdf):
+def build_sync_report(
+    questions,
+    questions_pdf,
+    solutions_pdf,
+    questions_url,
+    solutions_url,
+):
     report = validate_questions(questions)
     report.update(
         {
             "source": "Society of Actuaries official Exam P PDFs",
-            "questionsUrl": resolve_official_pdf_urls()[0],
-            "solutionsUrl": resolve_official_pdf_urls()[1],
+            "sourcePageUrl": STUDY_PAGE_URL,
+            "questionsUrl": questions_url,
+            "solutionsUrl": solutions_url,
             "syncedAt": datetime.now(timezone.utc).isoformat(),
             "questionsPdfSha256": sha256(Path(questions_pdf).read_bytes()).hexdigest(),
             "solutionsPdfSha256": sha256(Path(solutions_pdf).read_bytes()).hexdigest(),
@@ -102,28 +111,9 @@ def resolve_official_pdf_urls():
     questions_url = os.getenv("SOA_QUESTIONS_PDF_URL", DEFAULT_QUESTIONS_PDF_URL)
     solutions_url = os.getenv("SOA_SOLUTIONS_PDF_URL", DEFAULT_SOLUTIONS_PDF_URL)
 
-    if os.getenv("SOA_DISCOVER_PDF_URLS") == "1":
-        discovered = discover_pdf_urls(STUDY_PAGE_URL)
-        questions_url = pick_pdf_url(discovered, ("sample", "quest")) or questions_url
-        solutions_url = pick_pdf_url(discovered, ("sample", "sol")) or solutions_url
-
     assert_official_soa_url(questions_url)
     assert_official_soa_url(solutions_url)
     return questions_url, solutions_url
-
-
-def discover_pdf_urls(page_url):
-    html = fetch_bytes(page_url).decode("utf-8", errors="ignore")
-    hrefs = re.findall(r"""href=["']([^"']+\.pdf(?:\?[^"']*)?)["']""", html, re.I)
-    return [urljoin(page_url, href) for href in hrefs]
-
-
-def pick_pdf_url(urls, required_terms):
-    for url in urls:
-        lowered = url.lower()
-        if all(term in lowered for term in required_terms):
-            return url
-    return None
 
 
 def download_official_pdf(url, destination):
@@ -144,12 +134,44 @@ def fetch_bytes(url):
     assert_official_soa_url(url)
     request = Request(url, headers={"User-Agent": USER_AGENT})
     with urlopen(request, timeout=int(os.getenv("SOA_FETCH_TIMEOUT", "30"))) as response:
-        return response.read()
+        final_url = response.geturl()
+        assert_official_soa_url(final_url)
+
+        limit = int(
+            os.getenv("SOA_MAX_DOWNLOAD_BYTES", str(DEFAULT_MAX_DOWNLOAD_BYTES))
+        )
+        if limit <= 0:
+            raise OfficialQuestionSourceError(
+                "SOA_MAX_DOWNLOAD_BYTES must be a positive integer."
+            )
+        content_length = response.headers.get("Content-Length")
+        if content_length:
+            try:
+                declared_size = int(content_length)
+            except (TypeError, ValueError):
+                declared_size = None
+            if declared_size is not None and declared_size > limit:
+                raise OfficialQuestionSourceError(
+                    f"Official SOA response is larger than {limit} bytes: {final_url}"
+                )
+
+        data = response.read(limit + 1)
+        if len(data) > limit:
+            raise OfficialQuestionSourceError(
+                f"Official SOA response exceeded {limit} bytes: {final_url}"
+            )
+        return data
 
 
 def assert_official_soa_url(url):
-    host = urlparse(url).hostname or ""
-    if host != "soa.org" and not host.endswith(".soa.org"):
+    parsed = urlparse(url)
+    host = (parsed.hostname or "").lower()
+    if (
+        parsed.scheme != "https"
+        or host not in ALLOWED_SOA_HOSTS
+        or parsed.username is not None
+        or parsed.password is not None
+    ):
         raise OfficialQuestionSourceError(f"Refusing to fetch non-SOA URL: {url}")
 
 

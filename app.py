@@ -11,6 +11,7 @@ from soa_official import (
     DEFAULT_QUESTIONS_PDF_URL,
     DEFAULT_SOLUTIONS_PDF_URL,
     OfficialQuestionSourceError,
+    STUDY_PAGE_URL,
     load_official_questions,
     validate_questions,
 )
@@ -381,6 +382,7 @@ def health():
             "database": "postgresql" if using_postgres() else "sqlite",
             "question_count": int(row["count"]) if row else 0,
             "question_source": "Society of Actuaries official Exam P PDFs",
+            "source_page": STUDY_PAGE_URL,
             "questions_pdf": DEFAULT_QUESTIONS_PDF_URL,
             "solutions_pdf": DEFAULT_SOLUTIONS_PDF_URL,
         }
@@ -413,9 +415,18 @@ def get_question(question_id):
 
 @app.route("/api/answers/check", methods=["POST"])
 def check_answer():
-    data = request.get_json(force=True)
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return jsonify({"error": "Request body must be a JSON object"}), 400
+
     question_id = data.get("question_id")
     selected_answer = data.get("answer")
+    if (
+        not isinstance(question_id, int)
+        or isinstance(question_id, bool)
+        or not isinstance(selected_answer, str)
+    ):
+        return jsonify({"error": "question_id and answer are required"}), 400
 
     with get_connection() as conn:
         row = fetchone(conn, "SELECT * FROM questions WHERE id = ?", [question_id])

@@ -33,5 +33,9 @@ if __name__ == "__main__":
     from app import seed_questions_if_empty
 
     seed_questions_if_empty(force_refresh=args.refresh or args.refresh_official)
-    source = "bundled SOA snapshot" if args.local else "SOA official PDFs"
+    source = (
+        "bundled SOA snapshot"
+        if args.local or os.getenv("SOA_SYNC_AT_RUNTIME") != "1"
+        else "SOA official PDFs"
+    )
     print(f"Question database is ready from {source}.")
