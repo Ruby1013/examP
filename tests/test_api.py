@@ -117,6 +117,48 @@ def test_parser_accepts_soa_question_number_followed_by_comma():
     assert questions[0]["answer"] == "1/3"
 
 
+def test_parser_accepts_page_footer_joined_to_question_heading():
+    question_text = (
+        "Page 3 of 277 4. Example official question.\n"
+        "(A) 1 (B) 2 (C) 3 (D) 4 (E) 5"
+    )
+    solution_text = "4. Solution: D\nOfficial explanation"
+
+    questions = parse_questions(question_text, solution_text)
+
+    assert len(questions) == 1
+    assert questions[0]["id"] == 4
+    assert questions[0]["options"] == ["1", "2", "3", "4", "5"]
+
+
+def test_parser_accepts_pdf_option_with_missing_closing_parenthesis():
+    question_text = (
+        "146. Example official question. "
+        "(A) 0.064 (B) 0.138 (C) 0.148 (D 0.230 (E) 0.246"
+    )
+    solution_text = "146. Solution: D\nOfficial explanation"
+
+    questions = parse_questions(question_text, solution_text)
+
+    assert len(questions) == 1
+    assert questions[0]["options"] == ["0.064", "0.138", "0.148", "0.230", "0.246"]
+    assert questions[0]["answer"] == "0.230"
+
+
+def test_parser_does_not_treat_plan_letter_as_an_option():
+    question_text = (
+        "502. The policyholder could have chosen Plan B. Calculate the probability. "
+        "(A) 0.200 (B) 0.351 (C) 0.443 (D) 0.556 (E) 0.750"
+    )
+    solution_text = "502. Solution: D\nOfficial explanation"
+
+    questions = parse_questions(question_text, solution_text)
+
+    assert len(questions) == 1
+    assert questions[0]["options"][0] == "0.200"
+    assert questions[0]["answer"] == "0.556"
+
+
 def test_empty_answer_letter_is_not_treated_as_a_valid_option():
     assert option_value(["A", "B", "C", "D", "E"], "") == ""
 
