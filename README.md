@@ -55,6 +55,8 @@ python scripts/seed_db.py --refresh --local
 - `GET /api/questions/<id>`
 - `POST /api/answers/check`
 
+`GET /api/health` 會公開最近一次 Render 建置的官方同步時間與兩份 PDF 的 SHA-256；可用來確認正式站實際執行過官方下載，而不是只使用舊檔。
+
 ## 技術架構
 
 - Frontend：HTML、CSS、JavaScript、Canvas

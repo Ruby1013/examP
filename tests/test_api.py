@@ -20,6 +20,9 @@ def test_health_endpoint_returns_question_count():
     assert data["question_source"] == "Society of Actuaries official Exam P PDFs"
     assert data["source_page"].startswith("https://www.soa.org/")
     assert data["questions_pdf"].startswith("https://www.soa.org/")
+    assert "official_sync_at" in data
+    assert "questions_pdf_sha256" in data
+    assert "solutions_pdf_sha256" in data
 
 
 def test_answer_endpoint_rejects_invalid_json_body():

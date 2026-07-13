@@ -26,6 +26,7 @@ except ImportError:
 BASE_DIR = Path(__file__).resolve().parent
 DATABASE_URL = os.getenv("DATABASE_URL", "")
 SQLITE_PATH = BASE_DIR / "exam_p.sqlite3"
+SYNC_REPORT_PATH = BASE_DIR / "soa-parse-report.json"
 
 app = Flask(__name__)
 
@@ -135,6 +136,14 @@ def parse_question_bank_source(source):
 
 def load_local_question_bank_source():
     return (BASE_DIR / "questionBank.js").read_text(encoding="utf-8")
+
+
+def load_sync_report():
+    try:
+        report = json.loads(SYNC_REPORT_PATH.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    return report if isinstance(report, dict) else {}
 
 
 def load_seed_questions():
@@ -376,6 +385,7 @@ def health():
         create_schema(conn)
         row = fetchone(conn, "SELECT COUNT(*) AS count FROM questions")
 
+    sync_report = load_sync_report()
     return jsonify(
         {
             "status": "ok",
@@ -385,6 +395,9 @@ def health():
             "source_page": STUDY_PAGE_URL,
             "questions_pdf": DEFAULT_QUESTIONS_PDF_URL,
             "solutions_pdf": DEFAULT_SOLUTIONS_PDF_URL,
+            "official_sync_at": sync_report.get("syncedAt"),
+            "questions_pdf_sha256": sync_report.get("questionsPdfSha256"),
+            "solutions_pdf_sha256": sync_report.get("solutionsPdfSha256"),
         }
     )
 
