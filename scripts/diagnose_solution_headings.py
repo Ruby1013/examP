@@ -38,6 +38,7 @@ def main():
         f"{len(list(SOLUTION_HEADING_PATTERN.finditer(solutions_text)))}"
     )
     numbered_blocks = list(split_numbered_blocks(questions_text, answer_key))
+    blocks_by_id = dict(numbered_blocks)
     usable_ids = {
         question_id
         for question_id, block in numbered_blocks
@@ -47,6 +48,11 @@ def main():
     print(f"anchored_question_starts={len(numbered_blocks)}")
     print(f"usable_question_ids={len(usable_ids)}")
     print(f"missing_question_ids={missing_ids[:80]}")
+    print("full missing question blocks:")
+    for question_id in missing_ids:
+        block = blocks_by_id.get(question_id)
+        if block is not None:
+            print(f"BLOCK {question_id}: {block[:3000]!r}")
     print("missing question heading snippets:")
     for question_id in missing_ids[:20]:
         match = re.search(
