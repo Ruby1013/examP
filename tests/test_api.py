@@ -125,6 +125,20 @@ def test_parser_accepts_page_footer_joined_to_question_heading():
     assert questions[0]["options"] == ["1", "2", "3", "4", "5"]
 
 
+def test_parser_accepts_pdf_option_with_missing_closing_parenthesis():
+    question_text = (
+        "146. Example official question. "
+        "(A) 0.064 (B) 0.138 (C) 0.148 (D 0.230 (E) 0.246"
+    )
+    solution_text = "146. Solution: D\nOfficial explanation"
+
+    questions = parse_questions(question_text, solution_text)
+
+    assert len(questions) == 1
+    assert questions[0]["options"] == ["0.064", "0.138", "0.148", "0.230", "0.246"]
+    assert questions[0]["answer"] == "0.230"
+
+
 def test_empty_answer_letter_is_not_treated_as_a_valid_option():
     assert option_value(["A", "B", "C", "D", "E"], "") == ""
 
