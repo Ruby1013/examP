@@ -139,6 +139,20 @@ def test_parser_accepts_pdf_option_with_missing_closing_parenthesis():
     assert questions[0]["answer"] == "0.230"
 
 
+def test_parser_does_not_treat_plan_letter_as_an_option():
+    question_text = (
+        "502. The policyholder could have chosen Plan B. Calculate the probability. "
+        "(A) 0.200 (B) 0.351 (C) 0.443 (D) 0.556 (E) 0.750"
+    )
+    solution_text = "502. Solution: D\nOfficial explanation"
+
+    questions = parse_questions(question_text, solution_text)
+
+    assert len(questions) == 1
+    assert questions[0]["options"][0] == "0.200"
+    assert questions[0]["answer"] == "0.556"
+
+
 def test_empty_answer_letter_is_not_treated_as_a_valid_option():
     assert option_value(["A", "B", "C", "D", "E"], "") == ""
 
