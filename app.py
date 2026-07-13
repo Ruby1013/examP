@@ -7,6 +7,13 @@ from contextlib import contextmanager
 from pathlib import Path
 
 from flask import Flask, jsonify, request, send_from_directory
+from soa_official import (
+    DEFAULT_QUESTIONS_PDF_URL,
+    DEFAULT_SOLUTIONS_PDF_URL,
+    OfficialQuestionSourceError,
+    load_official_questions,
+    validate_questions,
+)
 
 try:
     import psycopg2
@@ -110,7 +117,14 @@ def create_schema(conn):
 
 
 def load_questions_from_js():
-    source = (BASE_DIR / "questionBank.js").read_text(encoding="utf-8")
+    return load_questions_from_local_js()
+
+
+def load_questions_from_local_js():
+    return parse_question_bank_source(load_local_question_bank_source())
+
+
+def parse_question_bank_source(source):
     match = re.search(r"const\s+questions\s*=\s*(\[.*\]);?\s*$", source, re.S)
     if not match:
         raise ValueError("Cannot find questions array in questionBank.js")
@@ -118,38 +132,80 @@ def load_questions_from_js():
     return json.loads(match.group(1))
 
 
-def seed_questions_if_empty():
-    with get_connection() as conn:
-        create_schema(conn)
-        row = fetchone(conn, "SELECT COUNT(*) AS count FROM questions")
-        if row and int(row["count"]) > 0:
-            return
+def load_local_question_bank_source():
+    return (BASE_DIR / "questionBank.js").read_text(encoding="utf-8")
 
-        for item in load_questions_from_js():
-            options = item.get("options", [])
-            options_value = (
-                psycopg2.extras.Json(options)
-                if using_postgres()
-                else json.dumps(options, ensure_ascii=False)
-            )
 
-            execute(
-                conn,
-                """
+def load_seed_questions():
+    if os.getenv("SOA_USE_LOCAL_QUESTIONBANK") == "1":
+        questions = load_questions_from_local_js()
+        validate_questions(questions)
+        return questions
+
+    try:
+        return load_official_questions()
+    except OfficialQuestionSourceError as exc:
+        if os.getenv("SOA_ALLOW_LOCAL_FALLBACK", "1") != "1":
+            raise
+        app.logger.warning("SOA PDF sync failed; using bundled official snapshot: %s", exc)
+        questions = load_questions_from_local_js()
+        validate_questions(questions)
+        return questions
+
+
+def insert_questions(conn, questions):
+    for item in questions:
+        options = item.get("options", [])
+        options_value = (
+            psycopg2.extras.Json(options)
+            if using_postgres()
+            else json.dumps(options, ensure_ascii=False)
+        )
+
+        if using_postgres():
+            sql = """
                 INSERT INTO questions
                     (id, topic, question, options, answer_letter, answer, explanation)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
-                """,
-                [
-                    item["id"],
-                    item.get("topic", "SOA Exam P Sample Question"),
-                    item.get("question", ""),
-                    options_value,
-                    item.get("answerLetter", ""),
-                    item.get("answer", ""),
-                    item.get("explanation", ""),
-                ],
-            )
+                ON CONFLICT (id) DO NOTHING
+            """
+        else:
+            sql = """
+                INSERT OR IGNORE INTO questions
+                    (id, topic, question, options, answer_letter, answer, explanation)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """
+
+        execute(
+            conn,
+            sql,
+            [
+                item["id"],
+                item.get("topic", "SOA Exam P Sample Question"),
+                item.get("question", ""),
+                options_value,
+                item.get("answerLetter", ""),
+                item.get("answer", ""),
+                item.get("explanation", ""),
+            ],
+        )
+
+
+def seed_questions_if_empty(force_refresh=False):
+    with get_connection() as conn:
+        create_schema(conn)
+        row = fetchone(conn, "SELECT COUNT(*) AS count FROM questions")
+        if not force_refresh and row and int(row["count"]) > 0:
+            return
+
+    questions = load_seed_questions()
+
+    with get_connection() as conn:
+        create_schema(conn)
+        if force_refresh:
+            execute(conn, "DELETE FROM questions")
+
+        insert_questions(conn, questions)
 
 
 def normalize_question(row):
@@ -206,6 +262,9 @@ def health():
             "status": "ok",
             "database": "postgresql" if using_postgres() else "sqlite",
             "question_count": int(row["count"]) if row else 0,
+            "question_source": "Society of Actuaries official Exam P PDFs",
+            "questions_pdf": DEFAULT_QUESTIONS_PDF_URL,
+            "solutions_pdf": DEFAULT_SOLUTIONS_PDF_URL,
         }
     )
 

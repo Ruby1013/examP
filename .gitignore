@@ -8,3 +8,4 @@ cloudflared.exe
 cloudflared.*.log
 docx_inspect/
 docx_review/
+.soa-cache/
