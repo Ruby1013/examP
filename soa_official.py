@@ -23,6 +23,9 @@ SOLUTION_HEADING_PATTERN = re.compile(
     r"(?<!\d)(\d{1,3})\s*[.,]\s*Solution\s*:?\s*([A-E])\b",
     re.I,
 )
+QUESTION_HEADING_PATTERN = re.compile(
+    r"(?m)(?:^[ \t]*|Page\s+\d+\s+of\s+\d+\s+)(\d{1,3})[.,][ \t]*"
+)
 
 
 class OfficialQuestionSourceError(RuntimeError):
@@ -198,7 +201,7 @@ def parse_questions(questions_text, solutions_text):
     solution_blocks = parse_solution_blocks(solutions_text)
     records = []
 
-    for question_id, block in split_numbered_blocks(questions_text):
+    for question_id, block in split_numbered_blocks(questions_text, answer_key):
         options = parse_options(block)
         if len(options) != 5:
             continue
@@ -230,9 +233,29 @@ def parse_questions(questions_text, solutions_text):
     return records
 
 
-def split_numbered_blocks(text):
-    # SOA question 286 currently uses a comma after the number in the PDF.
-    matches = list(re.finditer(r"(?m)^\s*(\d{1,3})[.,]\s+", text))
+def split_numbered_blocks(text, expected_ids=None):
+    # SOA question 286 uses a comma, and pypdf can join a page footer to the
+    # next heading ("Page 3 of 277 4. ..."). Official IDs are sequential, so
+    # use the solution key to ignore formula lines that resemble headings.
+    matches = list(QUESTION_HEADING_PATTERN.finditer(text))
+    if expected_ids is not None:
+        selected = []
+        cursor = -1
+        for expected_id in sorted(set(expected_ids)):
+            match = next(
+                (
+                    candidate
+                    for candidate in matches
+                    if candidate.start() > cursor
+                    and int(candidate.group(1)) == expected_id
+                ),
+                None,
+            )
+            if match is not None:
+                selected.append(match)
+                cursor = match.start()
+        matches = selected
+
     for index, match in enumerate(matches):
         question_id = int(match.group(1))
         start = match.end()
@@ -275,7 +298,8 @@ def parse_solution_blocks(text):
 
 def parse_options(block):
     option_pattern = re.compile(
-        r"(?ms)(?:^|\n)\s*(?:\(?([A-E])\)|([A-E])\.)\s+(.+?)(?=(?:\n\s*(?:\(?[A-E]\)|[A-E]\.)\s+)|\Z)"
+        r"(?s)(?:^|\s)(?:\(([A-E])\)|([A-E])\.)[ \t]*"
+        r"(.+?)(?=(?:\s+(?:\([A-E]\)|[A-E]\.)[ \t]*)|\Z)"
     )
     matches = option_pattern.findall(block)
     options_by_letter = {
@@ -294,7 +318,7 @@ def parse_options(block):
 
 
 def strip_options(block):
-    option_start = re.search(r"(?m)^\s*(?:\(?A\)|A\.)\s+", block)
+    option_start = re.search(r"(?s)(?:^|\s)(?:\(A\)|A\.)[ \t]*", block)
     if option_start:
         return block[: option_start.start()]
     return "\n".join(block.splitlines()[:-5])
