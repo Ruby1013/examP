@@ -45,9 +45,15 @@ def main():
         if len(parse_options(block)) == 5
     }
     missing_ids = sorted(set(answer_key) - usable_ids)
+    bundled_source = (ROOT / "questionBank.js").read_text(encoding="utf-8")
+    bundled_ids = {
+        int(value) for value in re.findall(r'"id"\s*:\s*(\d+)', bundled_source)
+    }
     print(f"anchored_question_starts={len(numbered_blocks)}")
     print(f"usable_question_ids={len(usable_ids)}")
     print(f"missing_question_ids={missing_ids[:80]}")
+    print(f"ids_added_vs_bundled={sorted(usable_ids - bundled_ids)}")
+    print(f"ids_removed_vs_bundled={sorted(bundled_ids - usable_ids)}")
     print("full missing question blocks:")
     for question_id in missing_ids:
         block = blocks_by_id.get(question_id)
