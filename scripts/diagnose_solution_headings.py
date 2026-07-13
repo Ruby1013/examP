@@ -53,6 +53,12 @@ def main():
         block = blocks_by_id.get(question_id)
         if block is not None:
             print(f"BLOCK {question_id}: {block[:3000]!r}")
+            option_markers = re.findall(
+                r"(?s)(?:^|\s)(?:\(([A-E])\)?|([A-E])\.)[ \t]*"
+                r"(.+?)(?=(?:\s+(?:\([A-E]\)?|[A-E]\.)[ \t]*)|\Z)",
+                block,
+            )
+            print(f"OPTION MATCHES {question_id}: {option_markers!r}")
     print("missing question heading snippets:")
     for question_id in missing_ids[:20]:
         match = re.search(
