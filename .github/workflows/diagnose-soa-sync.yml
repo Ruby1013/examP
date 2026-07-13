@@ -16,4 +16,6 @@ jobs:
           python-version: "3.11"
       - run: pip install -r requirements.txt
       - run: python scripts/diagnose_solution_headings.py
-
+      - run: python scripts/sync_official_questions.py
+      - run: pip install -r requirements-dev.txt
+      - run: pytest -q

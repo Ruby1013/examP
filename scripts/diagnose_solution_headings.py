@@ -37,7 +37,7 @@ def main():
         f"exact_heading_count="
         f"{len(list(SOLUTION_HEADING_PATTERN.finditer(solutions_text)))}"
     )
-    numbered_blocks = list(split_numbered_blocks(questions_text))
+    numbered_blocks = list(split_numbered_blocks(questions_text, answer_key))
     usable_ids = {
         question_id
         for question_id, block in numbered_blocks
