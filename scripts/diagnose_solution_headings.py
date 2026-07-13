@@ -54,6 +54,15 @@ def main():
     print(f"missing_question_ids={missing_ids[:80]}")
     print(f"ids_added_vs_bundled={sorted(usable_ids - bundled_ids)}")
     print(f"ids_removed_vs_bundled={sorted(bundled_ids - usable_ids)}")
+    for question_id in sorted(bundled_ids - set(answer_key)):
+        occurrence = re.search(rf"(?<!\d){question_id}(?!\d)", solutions_text)
+        if occurrence:
+            start = max(0, occurrence.start() - 120)
+            end = min(len(solutions_text), occurrence.end() + 200)
+            print(
+                f"MISSING SOLUTION MARKER {question_id}: "
+                f"{solutions_text[start:end]!r}"
+            )
     print("full missing question blocks:")
     for question_id in missing_ids:
         block = blocks_by_id.get(question_id)
