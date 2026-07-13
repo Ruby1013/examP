@@ -298,13 +298,13 @@ def parse_solution_blocks(text):
 
 def parse_options(block):
     option_pattern = re.compile(
-        r"(?s)(?:^|\s)(?:\(([A-E])\)?|([A-E])\.)[ \t]*"
-        r"(.+?)(?=(?:\s+(?:\([A-E]\)?|[A-E]\.)[ \t]*)|\Z)"
+        r"(?s)(?:^|\s)\(([A-E])\)?[ \t]*"
+        r"(.+?)(?=(?:\s+\([A-E]\)?[ \t]*)|\Z)"
     )
     matches = option_pattern.findall(block)
     options_by_letter = {
-        (letter_a or letter_b).upper(): value.strip()
-        for letter_a, letter_b, value in matches
+        letter.upper(): value.strip()
+        for letter, value in matches
     }
     if all(letter in options_by_letter for letter in "ABCDE"):
         return [options_by_letter[letter] for letter in "ABCDE"]
@@ -318,7 +318,7 @@ def parse_options(block):
 
 
 def strip_options(block):
-    option_start = re.search(r"(?s)(?:^|\s)(?:\(A\)?|A\.)[ \t]*", block)
+    option_start = re.search(r"(?s)(?:^|\s)\(A\)?[ \t]*", block)
     if option_start:
         return block[: option_start.start()]
     return "\n".join(block.splitlines()[:-5])

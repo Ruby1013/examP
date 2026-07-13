@@ -54,8 +54,8 @@ def main():
         if block is not None:
             print(f"BLOCK {question_id}: {block[:3000]!r}")
             option_markers = re.findall(
-                r"(?s)(?:^|\s)(?:\(([A-E])\)?|([A-E])\.)[ \t]*"
-                r"(.+?)(?=(?:\s+(?:\([A-E]\)?|[A-E]\.)[ \t]*)|\Z)",
+                r"(?s)(?:^|\s)\(([A-E])\)?[ \t]*"
+                r"(.+?)(?=(?:\s+\([A-E]\)?[ \t]*)|\Z)",
                 block,
             )
             print(f"OPTION MATCHES {question_id}: {option_markers!r}")
