@@ -76,3 +76,17 @@ def test_plain_explanation_uses_question_numbers_and_official_calculation():
     assert "1 - (0.28 + 0.29 - 0.08) = 0.52" in result
     assert "52%" in result
     assert "選項 D" in result
+
+
+def test_plain_explanation_cleans_pdf_number_spacing():
+    question = {
+        "question": "Calculate the probability that exactly two are defective.",
+        "answer": "0.102",
+        "answer_letter": "C",
+        "explanation": "The probability is = 0 . 102 .",
+    }
+
+    result = plain_explanation_for(question)
+
+    assert "0.102" in result
+    assert "0 . 102" not in result
